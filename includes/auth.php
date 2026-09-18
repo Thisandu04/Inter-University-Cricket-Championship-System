@@ -1,4 +1,7 @@
 <?php
+
+require_once __DIR__ . '/../config/config.php';
+
 session_start();
 
 /**
@@ -6,7 +9,7 @@ session_start();
  */
 function requireLogin() {
     if (!isset($_SESSION['user_id'])) {
-        header("Location: /inter-university-cricket-tournament/auth/login.php");
+        header("Location: " . BASE_URL . "/auth/login.php");
         exit;
     }
 }
