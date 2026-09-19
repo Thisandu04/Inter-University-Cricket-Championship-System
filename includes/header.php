@@ -1,5 +1,5 @@
 <?php
-require_once _DIR_ . '/auth.php';
+require_once __DIR__ . '/auth.php';
 $user = currentUser();
 $currentPage = basename($_SERVER['PHP_SELF']);
 ?>
