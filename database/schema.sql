@@ -64,6 +64,7 @@ CREATE TABLE teams (
   manager_user_id   INT NOT NULL,
   university_name   VARCHAR(100) NOT NULL UNIQUE,
   team_name         VARCHAR(100) NOT NULL,
+  short_code        VARCHAR(10)  NULL,   -- short abbreviation used on public pages (e.g. 'KEL')
   logo_path         VARCHAR(255) NULL,   -- relative path e.g. 'assets/logos/kelaniya.png'
   captain_player_id      INT NULL,
   vice_captain_player_id INT NULL,
