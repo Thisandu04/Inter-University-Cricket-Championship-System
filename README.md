@@ -126,6 +126,3 @@ CVC: any 3 digits
 * 🔒 Database queries use prepared statements (PDO) throughout
 * 🔑 Passwords are hashed with `password_hash()` / verified with `password_verify()`
 * 💳 Stripe payments are verified server-side via `retrieveCheckoutSession()` before marking complete
-
-```
-```
