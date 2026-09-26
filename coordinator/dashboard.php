@@ -9,7 +9,7 @@ $ongoingCount  = $pdo->query("SELECT COUNT(*) AS c FROM matches WHERE status = '
 $venueCount    = $pdo->query("SELECT COUNT(*) AS c FROM venues WHERE is_active = 1")->fetch()['c'];
 $teamCount     = $pdo->query("SELECT COUNT(*) AS c FROM teams WHERE approval_status = 'approved'")->fetch()['c'];
 
-$matchesTrend = getMatchesCompletedTrend($pdo, 7);
+$matchesTrend = getMatchesCompletedTrend($pdo, 30);
 
 $pageTitle = 'Coordinator Dashboard';
 require_once __DIR__ . '/../includes/header.php';
