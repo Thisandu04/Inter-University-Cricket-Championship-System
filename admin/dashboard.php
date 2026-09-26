@@ -9,8 +9,8 @@ $approvedTeams = $pdo->query("SELECT COUNT(*) AS c FROM teams WHERE approval_sta
 $totalUsers = $pdo->query("SELECT COUNT(*) AS c FROM users WHERE is_active = 1")->fetch()['c'];
 $totalRevenue = $pdo->query("SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE payment_status = 'completed'")->fetch()['total'];
 
-$paymentsTrend = getPaymentsTrend($pdo, 7);
-$signupsTrend = getSignupsTrend($pdo, 7);
+$paymentsTrend = getPaymentsTrend($pdo, 30);
+$signupsTrend = getSignupsTrend($pdo, 30);
 
 $pageTitle = 'Admin Dashboard';
 require_once __DIR__ . '/../includes/header.php';
