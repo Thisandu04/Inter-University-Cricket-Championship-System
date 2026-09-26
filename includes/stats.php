@@ -15,7 +15,7 @@ function emptyDayBuckets(int $days): array {
 /**
  * Daily sum of completed payment amounts over the last $days days.
  */
-function getPaymentsTrend(PDO $pdo, int $days = 7): array {
+function getPaymentsTrend(PDO $pdo, int $days = 30): array {
     $buckets = emptyDayBuckets($days);
     $stmt = $pdo->prepare("
         SELECT DATE(created_at) AS d, SUM(amount) AS total
@@ -34,7 +34,7 @@ function getPaymentsTrend(PDO $pdo, int $days = 7): array {
 /**
  * Daily count of new user signups over the last $days days.
  */
-function getSignupsTrend(PDO $pdo, int $days = 7): array {
+function getSignupsTrend(PDO $pdo, int $days = 30): array {
     $buckets = emptyDayBuckets($days);
     $stmt = $pdo->prepare("
         SELECT DATE(created_at) AS d, COUNT(*) AS c
@@ -53,7 +53,7 @@ function getSignupsTrend(PDO $pdo, int $days = 7): array {
  * Daily count of matches marked completed (based on when the result was
  * entered) over the last $days days.
  */
-function getMatchesCompletedTrend(PDO $pdo, int $days = 7): array {
+function getMatchesCompletedTrend(PDO $pdo, int $days = 30): array {
     $buckets = emptyDayBuckets($days);
     $stmt = $pdo->prepare("
         SELECT DATE(created_at) AS d, COUNT(*) AS c
@@ -72,24 +72,25 @@ function getMatchesCompletedTrend(PDO $pdo, int $days = 7): array {
  * Renders a small inline SVG sparkline from an array of numeric values.
  */
 function renderSparklineSvg(array $values, string $color): string {
-    if (count($values) < 2 || max($values) === 0) {
+    if (count($values) < 2) {
         return '<svg class="stat-sparkline" viewBox="0 0 100 28" preserveAspectRatio="none"></svg>';
     }
     $max = max($values);
     $min = min($values);
     $range = ($max - $min) ?: 1;
     $count = count($values);
+    $flat = ($max === 0);
 
     $points = [];
     foreach ($values as $i => $v) {
         $x = ($i / ($count - 1)) * 100;
-        $y = 26 - (($v - $min) / $range) * 22;
+        $y = $flat ? 26 : 26 - (($v - $min) / $range) * 22;
         $points[] = round($x, 1) . ',' . round($y, 1);
     }
     $pointsAttr = implode(' ', $points);
 
     return '<svg class="stat-sparkline" viewBox="0 0 100 28" preserveAspectRatio="none">'
-        . '<polyline points="' . $pointsAttr . '" fill="none" stroke="' . $color . '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+        . '<polyline points="' . $pointsAttr . '" fill="none" stroke="' . $color . '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="' . ($flat ? '0.3' : '1') . '"/>'
         . '</svg>';
 }
 
@@ -102,7 +103,7 @@ function renderStatCard(string $label, string $displayValue, ?array $trendValues
     $html .= '<p class="stat-card-label">' . htmlspecialchars($label) . '</p>';
     $html .= '<p class="stat-card-value">' . $displayValue . '</p>';
 
-    if ($trendValues !== null && count(array_filter($trendValues)) > 0) {
+    if ($trendValues !== null && count($trendValues) > 0) {
         $html .= renderSparklineSvg($trendValues, $accentColor);
 
         $first = reset($trendValues);
