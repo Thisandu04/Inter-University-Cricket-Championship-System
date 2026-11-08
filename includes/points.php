@@ -10,6 +10,13 @@ function oversToDecimal(float $overs): float {
 }
 
 /**
+ * Standard T20 format: 20 overs per innings, 10 wickets = all out.
+ * Used for the NRR "all out counts as full overs" rule below.
+ */
+const NRR_FULL_OVERS = 20.0;
+const NRR_ALL_OUT_WICKETS = 10;
+
+/**
  * Recalculates and saves the points_table row for a single team,
  * based on every completed match_results row that team was involved in.
  * Call this for BOTH teams after a result is entered or corrected.
@@ -19,8 +26,8 @@ function recalcPointsTable(PDO $pdo, int $teamId): void {
 
     $stmt = $pdo->prepare("
         SELECT m.team1_id, m.team2_id,
-               r.team1_score, r.team1_overs,
-               r.team2_score, r.team2_overs,
+               r.team1_score, r.team1_overs, r.team1_wickets,
+               r.team2_score, r.team2_overs, r.team2_wickets,
                r.result_type, r.winner_team_id
         FROM matches m
         JOIN match_results r ON r.match_id = m.match_id
@@ -37,15 +44,27 @@ function recalcPointsTable(PDO $pdo, int $teamId): void {
         $played++;
         $isTeam1 = ((int) $r['team1_id'] === $teamId);
 
-        $ownScore  = $isTeam1 ? $r['team1_score'] : $r['team2_score'];
-        $ownOvers  = $isTeam1 ? $r['team1_overs'] : $r['team2_overs'];
-        $oppScore  = $isTeam1 ? $r['team2_score'] : $r['team1_score'];
-        $oppOvers  = $isTeam1 ? $r['team2_overs'] : $r['team1_overs'];
+        $ownScore    = $isTeam1 ? $r['team1_score'] : $r['team2_score'];
+        $ownOvers    = $isTeam1 ? $r['team1_overs'] : $r['team2_overs'];
+        $ownWickets  = $isTeam1 ? $r['team1_wickets'] : $r['team2_wickets'];
+        $oppScore    = $isTeam1 ? $r['team2_score'] : $r['team1_score'];
+        $oppOvers    = $isTeam1 ? $r['team2_overs'] : $r['team1_overs'];
+        $oppWickets  = $isTeam1 ? $r['team2_wickets'] : $r['team1_wickets'];
+
+        // NRR rule: a team dismissed (all out) before using its full overs
+        // quota is credited with the FULL quota for run-rate purposes,
+        // not the actual overs it faced.
+        $ownOversForNrr = ((int) $ownWickets >= NRR_ALL_OUT_WICKETS)
+            ? NRR_FULL_OVERS
+            : oversToDecimal((float) $ownOvers);
+        $oppOversForNrr = ((int) $oppWickets >= NRR_ALL_OUT_WICKETS)
+            ? NRR_FULL_OVERS
+            : oversToDecimal((float) $oppOvers);
 
         $runsScored   += $ownScore;
-        $oversFaced   += oversToDecimal((float) $ownOvers);
+        $oversFaced   += $ownOversForNrr;
         $runsConceded += $oppScore;
-        $oversBowled  += oversToDecimal((float) $oppOvers);
+        $oversBowled  += $oppOversForNrr;
 
         if ($r['result_type'] === 'tie') {
             $tied++;
